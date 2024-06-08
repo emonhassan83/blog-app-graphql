@@ -1,9 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { jwtHelper } from "../../utils/jwtHelper";
 import config from "../../config";
-
-const prisma = new PrismaClient();
 
 interface IUserInfo {
   name: string;
@@ -13,7 +10,7 @@ interface IUserInfo {
 }
 
 export const Mutation = {
-  signup: async (parent: any, args: IUserInfo, context: any) => {
+  signup: async (parent: any, args: IUserInfo, { prisma }: any) => {
     const isExist = await prisma.user.findFirst({
       where: {
         email: args.email,
@@ -46,7 +43,7 @@ export const Mutation = {
       });
     }
 
-    const token = await jwtHelper(
+    const token = await jwtHelper.generateToken(
       { userId: newUser.id, email: newUser.email },
       config.jwt.secret as string
     );
@@ -56,7 +53,7 @@ export const Mutation = {
     };
   },
 
-  signIn: async (parent: any, args: any, context: any) => {
+  signIn: async (parent: any, args: any, { prisma }: any) => {
     const user = await prisma.user.findFirst({
       where: {
         email: args.email,
@@ -79,7 +76,7 @@ export const Mutation = {
       };
     }
 
-    const token = await jwtHelper(
+    const token = await jwtHelper.generateToken(
       { userId: user.id, email: user.email },
       config.jwt.secret as string
     );
@@ -87,6 +84,35 @@ export const Mutation = {
     return {
       userError: null,
       token,
+    };
+  },
+
+  addPost: async (parent: any, args: any, { prisma, userInfo }: any) => {
+    if (!userInfo) {
+      return {
+        userError: "Unauthorized Access!",
+        post: null,
+      };
+    }
+
+    if (!args.title || !args.content) {
+      return {
+        userError: "Title and content is required!",
+        post: null,
+      };
+    }
+
+    const newPost = await prisma.post.create({
+      data: {
+        title: args.title,
+        content: args.content,
+        authorId: userInfo.userId,
+      },
+    });
+
+    return {
+      userError: null,
+      post: newPost,
     };
   },
 };
