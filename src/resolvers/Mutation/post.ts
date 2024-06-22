@@ -38,11 +38,10 @@ export const postResolvers = {
       };
     }
 
-    const error = await checkUserAccess(prisma, userInfo.userId, args.postId)
-        if (error) {
-            return error;
-        }
-
+    const error = await checkUserAccess(prisma, userInfo.userId, args.postId);
+    if (error) {
+      return error;
+    }
 
     const updatedPost = await prisma.post.update({
       where: {
@@ -58,7 +57,32 @@ export const postResolvers = {
   },
 
   deletePost: async (parent: any, args: any, { prisma, userInfo }: any) => {
-    console.log(args)
+    console.log(args);
+    if (!userInfo) {
+      return {
+        userError: "Unauthorized",
+        post: null,
+      };
+    }
+
+    const error = await checkUserAccess(prisma, userInfo.userId, args.postId);
+    if (error) {
+      return error;
+    }
+
+    const deletedPost = await prisma.post.delete({
+      where: {
+        id: Number(args.postId),
+      },
+    });
+
+    return {
+      userError: null,
+      post: deletedPost,
+    };
+  },
+
+  publishPost: async (parent: any, args: any, { prisma, userInfo }: any) => {
     if (!userInfo) {
         return {
             userError: "Unauthorized",
@@ -71,16 +95,19 @@ export const postResolvers = {
         return error;
     }
 
-    const deletedPost = await prisma.post.delete({
+
+    const publishPost = await prisma.post.update({
         where: {
             id: Number(args.postId)
+        },
+        data: {
+            published: true
         }
     });
 
     return {
         userError: null,
-        post: deletedPost
+        post: publishPost
     }
-
-},
+  }
 };
