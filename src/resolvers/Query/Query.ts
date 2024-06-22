@@ -20,6 +20,7 @@ export const Query = {
   },
 
   posts: async (parent: any, args: any, { prisma }: any) => {
+    console.log("user");
     return await prisma.post.findMany({
       where: {
         published: true,
