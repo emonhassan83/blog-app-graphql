@@ -31,7 +31,7 @@ export const typeDefs = `#graphql
       title: String!
       content: String!
       author: User
-      cratedAt: String!
+      createdAt: String!
       updatedAt: String!
       published: Boolean!
     }
